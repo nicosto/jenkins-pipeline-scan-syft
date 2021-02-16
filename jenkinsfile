@@ -1,0 +1,85 @@
+pipeline {
+  agent {
+    kubernetes {
+      yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  name: syft
+spec:
+  containers:
+  - name: syft
+    image: nicosto75/syft:0.2.0
+    command: [ "sleep" ]
+    args: [ "3600" ]
+    resources:
+      requests:
+        cpu: "10m"
+        memory: "256Mi"
+    env: 
+      - name: DOCKER_HOST
+        value: tcp://localhost:2376
+      - name: DOCKER_TLS_VERIFY
+        value: '1'
+      - name: DOCKER_CERT_PATH
+        value: "/certs/client"
+    volumeMounts: 
+      - mountPath: "/certs/client"
+        name: docker-client-certs 
+      - mountPath: "/home/syft"
+        name: syft-config
+        readOnly: true
+  - name: dind-daemon 
+    image: docker:20.10-dind
+    resources: 
+      requests: 
+          cpu: 20m 
+          memory: 512Mi
+    securityContext: 
+        privileged: true 
+    volumeMounts: 
+      - name: docker-client-certs 
+        mountPath: /certs/client
+  restartPolicy: OnFailure
+  volumes: 
+    - name: docker-client-certs 
+      emptyDir: {}
+    - name: syft-config
+      configMap:
+        name: syft-configmap
+"""
+    }
+  }
+  
+  stages {
+    stage('Security scan') {
+      steps {
+//      script {
+//          def data = readYaml file: '.descriptor.yaml'
+//          def version = data.image.tag.replaceAll(/([a-zA-Z0-9]*)\.([a-zA-Z0-9]*)\.(.*)/,'$1.$2')
+//          sh "echo Image: ${data.image.name}:${data.image.tag}' computed version: '${version}"
+//      }
+        container('syft') {
+          script {
+            def data = readYaml file: '.descriptor.yaml'
+//                def version = data.image.tag.replaceAll(/([a-zA-Z0-9]*)\.([a-zA-Z0-9]*)\.(.*)/,'$1.$2')
+  //              sh "echo Image: ${data.image.name}:${data.image.tag}' computed version: '${version}"
+    // sh "echo ${data.image.tag}"
+            sh "/usr/local/bin/syft ${data.image.name}:${data.image.tag} > ./bom.xml"            
+          }
+        }
+      }  
+      post {
+        success {
+          script {
+            def data = readYaml file: '.descriptor.yaml'
+            def version = data.image.tag.replaceAll(/([a-zA-Z0-9]*)\.([a-zA-Z0-9]*)\.(.*)/,'$1.$2')
+            withCredentials([string(credentialsId: '73ba523a-b7be-4e5b-9d78-e6ea7ad11a66', variable: 'API_KEY')]) {
+              dependencyTrackPublisher artifact: './bom.xml', projectName: "${data.image.name}", projectVersion: "${version}", synchronous: true, dependencyTrackApiKey: API_KEY
+            }
+          }
+        }
+      }
+    }
+  }
+}
