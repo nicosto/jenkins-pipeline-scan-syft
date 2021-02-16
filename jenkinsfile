@@ -23,12 +23,29 @@ spec:
         value: '1'
       - name: DOCKER_CERT_PATH
         value: "/certs/client"
+      - name: SYFT_OUTPUT
+        value: "cyclonedx"
+      - name: SYFT_SCOPE
+        value: "squashed"
+      - name: SYFT_QUIET
+        value: "true"
+      - name: SYFT_CHECK_FOR_APP_UPDATE
+        value: "false"
+      - name: SYFT_LOG_STRUCTURED
+        value: "false"
+      - name: SYFT_LOG_LEVEL
+        value: "error"
+      - name: SYFT_LOG_FILE
+        value: ""
+      - name: SYFT_ANCHORE_UPLOAD_ENABLED
+        value: "false"
     volumeMounts: 
       - mountPath: "/certs/client"
         name: docker-client-certs 
-      - mountPath: "/home/syft"
-        name: syft-config
-        readOnly: true
+      
+      # - mountPath: "/home/syft"
+      #  name: syft-config
+      #  readOnly: true
   - name: dind-daemon 
     image: docker:20.10-dind
     resources: 
@@ -44,9 +61,9 @@ spec:
   volumes: 
     - name: docker-client-certs 
       emptyDir: {}
-    - name: syft-config
-      configMap:
-        name: syft-configmap
+    # - name: syft-config
+    #  configMap:
+    #    name: syft-configmap
 """
     }
   }
