@@ -9,7 +9,7 @@ metadata:
 spec:
   containers:
   - name: syft
-    image: nicosto75/syft:0.2.0
+    image: nicosto75/syft:0.13.1
     command: [ "sleep" ]
     args: [ "3600" ]
     resources:
