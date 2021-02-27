@@ -91,7 +91,7 @@ spec:
           script {
             def data = readYaml file: '.descriptor.yaml'
             def version = data.image.tag.replaceAll(/([a-zA-Z0-9]*)\.([a-zA-Z0-9]*)\.(.*)/,'$1.$2')
-            withCredentials([string(credentialsId: '73ba523a-b7be-4e5b-9d78-e6ea7ad11a66', variable: 'API_KEY')]) {
+            withCredentials([string(credentialsId: 'dependency-track-api', variable: 'API_KEY')]) {
               dependencyTrackPublisher artifact: './bom.xml', projectName: "${data.image.name}", projectVersion: "${version}", synchronous: true, dependencyTrackApiKey: API_KEY
             }
           }
