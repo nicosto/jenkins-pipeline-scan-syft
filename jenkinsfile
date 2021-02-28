@@ -75,7 +75,7 @@ spec:
           script {
 
             withCredentials([string(credentialsId: 'dependency-track-api', variable: 'API_KEY')]) {
-              sh ("echo ${API_KEY}")
+              sh ('echo ${API_KEY}')
             }
 
             def data = readYaml file: '.descriptor.yaml'
