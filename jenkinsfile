@@ -71,25 +71,14 @@ spec:
   stages {
     stage('Security scan') {
       steps {
-//      script {
-//          def data = readYaml file: '.descriptor.yaml'
-//          def version = data.image.tag.replaceAll(/([a-zA-Z0-9]*)\.([a-zA-Z0-9]*)\.(.*)/,'$1.$2')
-//          sh "echo Image: ${data.image.name}:${data.image.tag}' computed version: '${version}"
-//      }
         container('syft') {
           script {
 
             withCredentials([string(credentialsId: 'dependency-track-api', variable: 'API_KEY')]) {
-              sh "echo ${API_KEY}"
+              sh ("echo ${API_KEY}")
             }
 
-
-
-
             def data = readYaml file: '.descriptor.yaml'
-//                def version = data.image.tag.replaceAll(/([a-zA-Z0-9]*)\.([a-zA-Z0-9]*)\.(.*)/,'$1.$2')
-  //              sh "echo Image: ${data.image.name}:${data.image.tag}' computed version: '${version}"
-    // sh "echo ${data.image.tag}"
             sh "/usr/local/bin/syft ${data.image.name}:${data.image.tag} > ./bom.xml"            
           }
         }
@@ -99,6 +88,9 @@ spec:
           script {
             def data = readYaml file: '.descriptor.yaml'
             def version = data.image.tag.replaceAll(/([a-zA-Z0-9]*)\.([a-zA-Z0-9]*)\.(.*)/,'$1.$2')
+            
+            sh "echo Image: ${data.image.name}:${data.image.tag}' computed version: '${version}"
+
             withCredentials([string(credentialsId: 'dependency-track-api', variable: 'API_KEY')]) {
               dependencyTrackPublisher artifact: './bom.xml', projectName: "${data.image.name}", projectVersion: "${version}", synchronous: true, dependencyTrackApiKey: API_KEY
             }
